@@ -138,6 +138,75 @@ jobs:
           --version "1.0.0" \
           --install-location "/" \
           "component.pkg"
+
+        # welcome.html
+        cat <<'EOF' > welcome.html
+          <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <title>Welcome</title>
+                <style>
+                    body { font-family: -apple-system, sans-serif; padding: 20px; }
+                    h1 { font-size: 24px; }
+                    p { font-size: 14px; }
+                </style>
+            </head>
+            <body>
+                <h1>Welcome to ArkAnalyzer HapRay</h1>
+                <p>This installer will guide you through the installation process.</p>
+                <p>Click Continue to proceed.</p>
+            </body>
+            </html>
+          EOF
+        
+        # 创建 RTF 头部
+        cat > license.rtf <<'EOF'
+          {\rtf1\ansi\ansicpg1252\cocoartf2708
+          {\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\fnil\fcharset0 Menlo-Regular;}
+          {\colortbl;\red255\green255\blue255;\red0\green0\blue0;}
+          {\*\expandedcolortbl;;\cssrgb\c0\c0\c0;}
+          \paperw12240\paperh15840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+          \deftab720
+          \pard\pardeftab720\partightenfactor0
+          \f0\b\fs28 \cf0 \expnd0\expndtw0\kerning0
+          Apache License\line
+          Version 2.0, January 2004\line
+          \b0\fs24 \line
+          \fs22 http://www.apache.org/licenses/\line
+          \line
+          \fs24 TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\line
+          \line
+          EOF
+        
+        # 添加 LICENSE 文件内容（跳过前几行）
+        tail -n +19 LICENSE | sed -e 's/\\/\\\\/g' -e 's/{/\\{/g' -e 's/}/\\}/g' >> license.rtf
+
+        # 添加 RTF 尾部
+        cat >> license.rtf <<'EOF'
+          \f1\fs18 \line
+          \pard\pardeftab720\partightenfactor0
+          \cf0 \expnd0\expndtw0\kerning0
+          END OF TERMS AND CONDITIONS\line
+          \line
+          APPENDIX: How to apply the Apache License to your work\line
+          \line
+          To apply the Apache License to your work, attach the following boilerplate notice, with the fields enclosed by brackets "[]" replaced with your own identifying information. (Don't include the brackets!) The text should be enclosed in the appropriate comment syntax for the file format. We also recommend that a file or class name and description of purpose be included on the same "printed page" as the copyright notice for easier identification within third-party archives.\line
+          \line
+          Copyright [yyyy] [name of copyright owner]\line
+          \line
+          Licensed under the Apache License, Version 2.0 (the "License");\line
+          you may not use this file except in compliance with the License.\line
+          You may obtain a copy of the License at\line
+          \line
+          http://www.apache.org/licenses/LICENSE-2.0\line
+          \line
+          Unless required by applicable law or agreed to in writing, software\line
+          distributed under the License is distributed on an "AS IS" BASIS,\line
+          WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\line
+          See the License for the specific language governing permissions and\line
+          limitations under the License.}
+          EOF
         
         # 创建分发文件
         cat <<'EOF' > distribution.xml
@@ -175,5 +244,5 @@ jobs:
       with:
         name: ArkAnalyzer-HapRay-${{ matrix.item.platform }}-${{ matrix.item.arch }}
         path: |
-          ArkAnalyzer-HapRay-*.zip
           ArkAnalyzer-HapRay-*.pkg
+          ArkAnalyzer-HapRay-*.zip
