@@ -98,35 +98,24 @@ jobs:
         # 复制应用到安装目录
         cp -R "$APP_PATH" pkg_root/Applications/
         
-        echo "Files in current directory:"
+        echo "Files in current directory 1:"
         ls -l 
         ls -l pkg_root/Applications
         ls -ls pkg_scripts
 
-        cat > component.plist <<EOF
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <array>
-              <dict>
-                  <key>BundleHasStrictIdentifier</key>
-                  <true/>
-                  <key>BundleIsRelocatable</key>
-                  <false/>
-                  <key>BundleIsVersionChecked</key>
-                  <true/>
-                  <key>BundleOverwriteAction</key>
-                  <string>upgrade</string>
-                  <key>BundleType</key>
-                  <string>Application</string>
-                  <key>ChildBundles</key>
-                  <array/>
-              </dict>
-          </array>
-          </plist>
-          EOF
+        cp .github/workflows/macos/component.plist component.plist 
+        
+        # 构建组件包
+        pkgbuild \
+          --root "pkg_root" \
+          --component-plist component.plist \
+          --scripts "pkg_scripts" \
+          --identifier "com.huawei.${APP_NAME}" \
+          --version "1.0.0" \
+          --install-location "/" \
+          "component.pkg"
 
-        echo "Files in current directory:"
+        echo "Files in current directory 2:"
         ls -l 
         ls -l pkg_root/Applications
         ls -ls pkg_scripts
