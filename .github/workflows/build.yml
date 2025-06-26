@@ -12,21 +12,7 @@ jobs:
     runs-on: ${{ matrix.item.os }}
     strategy:
       matrix:
-        item:
-          # Linux - 使用静态 Python
-          - os: ubuntu-22.04
-            arch: x64
-            platform: linux
-            package_lock_path: .github/workflows/package-lock.json
-            use_static_python: true  # 添加此标志
-            
-          # Windows
-          - os: windows-latest
-            arch: x64
-            platform: win32
-            package_lock_path: .github/workflows/package-lock.json
-            use_static_python: false
-            
+        item:            
           # macOS - ARM (Apple Silicon)
           - os: macos-14
             arch: arm64
@@ -109,12 +95,12 @@ jobs:
         mkdir -p pkg_scripts
         
         # 查找并移动应用程序
-        APP_PATH=$(find perf_testing/dist -maxdepth 1 -type d -name "ArkAnalyzer-HapRay" | head -n 1)
+        APP_PATH=perf_testing/dist/ArkAnalyzer-HapRay
         if [ -z "$APP_PATH" ]; then
-          echo "Error: No .app bundle found in dist directory"
+          echo "Error: No ArkAnalyzer-HapRay bundle found in dist directory"
           exit 1
         fi
-        APP_NAME=$(basename "$APP_PATH")
+        APP_NAME=ArkAnalyzer-HapRay
         
         # 复制应用到安装目录
         cp -R "$APP_PATH" pkg_root/Applications/
