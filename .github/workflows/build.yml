@@ -100,8 +100,76 @@ jobs:
       run: |
         npm run release
 
+    # 仅 macOS：创建安装包
+    - name: Create macOS Installer Package
+      if: ${{ startsWith(matrix.item.os, 'macos') }}
+      run: |
+        # 创建必要的目录结构
+        mkdir -p pkg_root/Applications
+        mkdir -p pkg_scripts
+        
+        # 查找并移动应用程序
+        APP_PATH=$(find dist -maxdepth 1 -type d -name "*.app" | head -n 1)
+        if [ -z "$APP_PATH" ]; then
+          echo "Error: No .app bundle found in dist directory"
+          exit 1
+        fi
+        
+        # 复制应用到安装目录
+        cp -R "$APP_PATH" pkg_root/Applications/
+        
+        # 创建组件属性列表 (plist)
+        /usr/libexec/PlistBuddy -c "Add :BundleIsRelocatable bool false" component.plist
+        /usr/libexec/PlistBuddy -c "Add :BundleIsVersionChecked bool true" component.plist
+        /usr/libexec/PlistBuddy -c "Add :BundleHasStrictIdentifier bool true" component.plist
+        /usr/libexec/PlistBuddy -c "Add :BundleOverwriteAction string upgrade" component.plist
+        
+        # 构建组件包
+        pkgbuild \
+          --root "pkg_root" \
+          --component-plist component.plist \
+          --scripts "pkg_scripts" \
+          --identifier "com.huawei.${APP_PATH%.app}" \
+          --version "1.0.0" \
+          --install-location "/" \
+          "component.pkg"
+        
+        # 创建分发文件
+        cat > distribution.xml <<EOT
+<?xml version="1.0" encoding="utf-8"?>
+<installer-gui-script minSpecVersion="2">
+    <title>Your Application Name</title>
+    <background file="background.png" alignment="bottomleft" scaling="none"/>
+    <welcome file="welcome.html"/>
+    <license file="license.rtf"/>
+    <options customize="never" rootVolumeOnly="true"/>
+    <domains enable_anywhere="false" enable_currentUserHome="false" enable_localSystem="true"/>
+    <pkg-ref id="com.huawei.${APP_PATH%.app}"/>
+    <choices-outline>
+        <line choice="default">
+            <line choice="${APP_PATH%.app}"/>
+        </line>
+    </choices-outline>
+    <choice id="default"/>
+    <choice id="${APP_PATH%.app}" visible="false">
+        <pkg-ref id="com.huawei.${APP_PATH%.app}"/>
+    </choice>
+    <pkg-ref id="com.huawei.${APP_PATH%.app}" version="1.0.0" onConclusion="none">component.pkg</pkg-ref>
+</installer-gui-script>
+EOT
+        
+        # 创建最终安装包
+        productbuild \
+          --distribution distribution.xml \
+          --resources . \
+          --package-path . \
+          "ArkAnalyzer-HapRay-${{ matrix.item.platform }}-${{ matrix.item.arch }}.pkg"
+      shell: bash
+
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
         name: ArkAnalyzer-HapRay-${{ matrix.item.platform }}-${{ matrix.item.arch }}
-        path: ArkAnalyzer-HapRay-*.zip
+        path: |
+          ArkAnalyzer-HapRay-*.zip
+          ArkAnalyzer-HapRay-*.pkg

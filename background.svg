@@ -1,0 +1,52 @@
+<svg width="600" height="424" viewBox="0 0 600 424" xmlns="http://www.w3.org/2000/svg">
+  <!-- 渐变背景 -->
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3498db" />
+      <stop offset="50%" stop-color="#9b59b6" />
+      <stop offset="100%" stop-color="#1abc9c" />
+    </linearGradient>
+    
+    <filter id="blur" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="20" />
+    </filter>
+  </defs>
+  
+  <!-- 背景图层 -->
+  <rect width="600" height="424" fill="url(#gradient)" />
+  
+  <!-- 装饰性模糊形状 -->
+  <g filter="url(#blur)" opacity="0.3">
+    <circle cx="450" cy="150" r="80" fill="#e74c3c" />
+    <circle cx="150" cy="300" r="60" fill="#f1c40f" />
+    <circle cx="300" cy="100" r="50" fill="#2ecc71" />
+    <circle cx="500" cy="350" r="70" fill="#e67e22" />
+  </g>
+  
+  <!-- 中央内容区域 -->
+  <g transform="translate(300, 212)">
+    <!-- 应用图标容器 -->
+    <rect x="-80" y="-80" width="160" height="160" rx="30" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.3)" stroke-width="2" />
+    
+    <!-- 应用图标 -->
+    <g transform="scale(0.7)">
+      <path d="M-70,-70 L70,-70 L70,70 L-70,70 Z" fill="none" stroke="white" stroke-width="10" />
+      <path d="M-40,-40 L40,-40 L40,40 L-40,40 Z" fill="none" stroke="white" stroke-width="8" />
+      <circle cx="0" cy="0" r="25" fill="none" stroke="white" stroke-width="6" />
+      <path d="M-15,0 L15,0 M0,-15 L0,15" stroke="white" stroke-width="4" />
+    </g>
+    
+    <!-- 文字区域 -->
+    <g transform="translate(0, 120)">
+      <text text-anchor="middle" fill="white" font-family="Helvetica, Arial, sans-serif" font-weight="bold">
+        <tspan x="0" y="-10" font-size="28">ArkAnalyzer HapRay</tspan>
+        <tspan x="0" y="30" font-size="18" opacity="0.9">Professional Data Analysis Tool</tspan>
+      </text>
+    </g>
+  </g>
+  
+  <!-- 底部版权信息 -->
+  <text x="300" y="410" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-family="Helvetica, Arial, sans-serif" font-size="12">
+    © 2025 HUAWEI. All rights reserved.
+  </text>
+</svg>
