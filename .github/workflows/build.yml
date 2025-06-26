@@ -20,14 +20,7 @@ jobs:
             pyinstaller_arch: arm64
             package_lock_path: .github/workflows/package-lock.json
             use_static_python: false
-            
-          # macOS - x86 (Intel)
-          - os: macos-13
-            arch: x86_64
-            platform: darwin
-            pyinstaller_arch: x86_64
-            package_lock_path: .github/workflows/package-lock.json
-            use_static_python: false
+
         # 将 node-version 移到每个 item 中
         include:
           - node-version: 18.x
@@ -93,9 +86,50 @@ jobs:
         # 创建必要的目录结构
         mkdir -p pkg_root/Applications
         mkdir -p pkg_scripts
+        
+        # 查找并移动应用程序
+        APP_PATH=perf_testing/dist/ArkAnalyzer-HapRay
+        if [ -z "$APP_PATH" ]; then
+          echo "Error: No ArkAnalyzer-HapRay bundle found in dist directory"
+          exit 1
+        fi
+        APP_NAME=ArkAnalyzer-HapRay
+
+        # 复制应用到安装目录
+        cp -R "$APP_PATH" pkg_root/Applications/
+        
+        echo "Files in current directory:"
+        ls -l 
+        ls -l pkg_root/Applications
+        ls -ls pkg_scripts
+
+        cat > component.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <array>
+              <dict>
+                  <key>BundleHasStrictIdentifier</key>
+                  <true/>
+                  <key>BundleIsRelocatable</key>
+                  <false/>
+                  <key>BundleIsVersionChecked</key>
+                  <true/>
+                  <key>BundleOverwriteAction</key>
+                  <string>upgrade</string>
+                  <key>BundleType</key>
+                  <string>Application</string>
+                  <key>ChildBundles</key>
+                  <array/>
+              </dict>
+          </array>
+          </plist>
+          EOF
 
         echo "Files in current directory:"
-        ls -l
+        ls -l 
+        ls -l pkg_root/Applications
+        ls -ls pkg_scripts
           
       shell: bash
 
