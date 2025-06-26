@@ -137,10 +137,18 @@ jobs:
         ls -ls pkg_scripts
       shell: bash
 
-    - name: Upload artifact
+    - name: Upload artifact macOS
+      if: ${{ startsWith(matrix.item.os, 'macos') }}
       uses: actions/upload-artifact@v4
       with:
         name: ArkAnalyzer-HapRay-${{ matrix.item.platform }}-${{ matrix.item.arch }}
         path: |
           ArkAnalyzer-HapRay-*.pkg
+
+    - name: Upload artifact
+      if: ${{ !startsWith(matrix.item.os, 'macos') }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: ArkAnalyzer-HapRay-${{ matrix.item.platform }}-${{ matrix.item.arch }}
+        path: |
           ArkAnalyzer-HapRay-*.zip
