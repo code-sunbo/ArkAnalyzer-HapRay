@@ -119,7 +119,22 @@ jobs:
         ls -l 
         ls -l pkg_root/Applications
         ls -ls pkg_scripts
-          
+
+        cp .github/workflows/macos/welcome.html welcome.html
+        cp .github/workflows/macos/license.rtf license.rtf
+        cp .github/workflows/macos/distribution.xml distribution.xml
+
+        # 创建最终安装包
+        productbuild \
+          --distribution distribution.xml \
+          --resources . \
+          --package-path . \
+          "ArkAnalyzer-HapRay-${{ matrix.item.platform }}-${{ matrix.item.arch }}.pkg"
+
+        echo "Files in current directory 3:"
+        ls -l 
+        ls -l pkg_root/Applications
+        ls -ls pkg_scripts
       shell: bash
 
     - name: Upload artifact

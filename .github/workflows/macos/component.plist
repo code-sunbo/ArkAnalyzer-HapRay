@@ -1,20 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
-    <array>
-        <dict>
-            <key>BundleHasStrictIdentifier</key>
-            <true/>
-            <key>BundleIsRelocatable</key>
-            <false/>
-            <key>BundleIsVersionChecked</key>
-            <true/>
-            <key>BundleOverwriteAction</key>
-            <string>upgrade</string>
-            <key>BundleType</key>
-            <string>Application</string>
-            <key>ChildBundles</key>
-            <array/>
-        </dict>
-    </array>
+<array>
+    <dict>
+        <!-- 添加必需的 RootRelativeBundlePath -->
+        <key>RootRelativeBundlePath</key>
+        <string>Applications/ArkAnalyzer-HapRay</string>
+        
+        <!-- 保留原有属性 -->
+        <key>BundleHasStrictIdentifier</key>
+        <true/>
+        <key>BundleIsRelocatable</key>
+        <false/>
+        <key>BundleIsVersionChecked</key>
+        <true/>
+        <key>BundleOverwriteAction</key>
+        <string>upgrade</string>
+        <key>BundleType</key>
+        <string>Application</string>
+        <key>ChildBundles</key>
+        <array/>
+    </dict>
+</array>
 </plist>

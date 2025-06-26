@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<installer-gui-script minSpecVersion="2">
+    <title>ArkAnalyzer HapRay</title>
+    <background file="background.svg" alignment="bottomleft" scaling="none"/>
+    <welcome file="welcome.html"/>
+    <license file="license.rtf"/>
+    <options customize="never" rootVolumeOnly="true"/>
+    <domains enable_anywhere="false" enable_currentUserHome="false" enable_localSystem="true"/>
+    <pkg-ref id="com.huawei.ArkAnalyzer-HapRay"/>
+    <choices-outline>
+        <line choice="default">
+            <line choice="ArkAnalyzer-HapRay"/>
+        </line>
+    </choices-outline>
+    <choice id="default"/>
+    <choice id="ArkAnalyzer-HapRay" visible="false">
+        <pkg-ref id="com.huawei.ArkAnalyzer-HapRay"/>
+    </choice>
+    <pkg-ref id="com.huawei.ArkAnalyzer-HapRay" version="1.0.0" onConclusion="none">component.pkg</pkg-ref>
+</installer-gui-script>
