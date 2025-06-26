@@ -5,7 +5,7 @@
     <dict>
         <!-- 添加必需的 RootRelativeBundlePath -->
         <key>RootRelativeBundlePath</key>
-        <string>Applications/ArkAnalyzer-HapRay</string>
+        <string>Applications/ArkAnalyzer-HapRay.app</string>
         
         <!-- 保留原有属性 -->
         <key>BundleHasStrictIdentifier</key>

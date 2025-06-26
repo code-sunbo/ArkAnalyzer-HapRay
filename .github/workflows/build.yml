@@ -88,7 +88,7 @@ jobs:
         mkdir -p pkg_scripts
         
         # 查找并移动应用程序
-        APP_PATH=perf_testing/dist/ArkAnalyzer-HapRay
+        APP_PATH=perf_testing/dist/ArkAnalyzer-HapRay.app
         if [ -z "$APP_PATH" ]; then
           echo "Error: No ArkAnalyzer-HapRay bundle found in dist directory"
           exit 1
