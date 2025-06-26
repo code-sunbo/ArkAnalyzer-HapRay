@@ -136,27 +136,27 @@ jobs:
         
         # 创建分发文件
         cat <<'EOF' > distribution.xml
-<?xml version="1.0" encoding="utf-8"?>
-<installer-gui-script minSpecVersion="2">
-    <title>Your Application Name</title>
-    <background file="background.png" alignment="bottomleft" scaling="none"/>
-    <welcome file="welcome.html"/>
-    <license file="license.rtf"/>
-    <options customize="never" rootVolumeOnly="true"/>
-    <domains enable_anywhere="false" enable_currentUserHome="false" enable_localSystem="true"/>
-    <pkg-ref id="com.huawei.${APP_PATH%.app}"/>
-    <choices-outline>
-        <line choice="default">
-            <line choice="${APP_PATH%.app}"/>
-        </line>
-    </choices-outline>
-    <choice id="default"/>
-    <choice id="${APP_PATH%.app}" visible="false">
-        <pkg-ref id="com.huawei.${APP_PATH%.app}"/>
-    </choice>
-    <pkg-ref id="com.huawei.${APP_PATH%.app}" version="1.0.0" onConclusion="none">component.pkg</pkg-ref>
-</installer-gui-script>
-EOF
+          <?xml version="1.0" encoding="utf-8"?>
+          <installer-gui-script minSpecVersion="2">
+              <title>Your Application Name</title>
+              <background file="background.png" alignment="bottomleft" scaling="none"/>
+              <welcome file="welcome.html"/>
+              <license file="license.rtf"/>
+              <options customize="never" rootVolumeOnly="true"/>
+              <domains enable_anywhere="false" enable_currentUserHome="false" enable_localSystem="true"/>
+              <pkg-ref id="com.huawei.${APP_PATH%.app}"/>
+              <choices-outline>
+                  <line choice="default">
+                      <line choice="${APP_PATH%.app}"/>
+                  </line>
+              </choices-outline>
+              <choice id="default"/>
+              <choice id="${APP_PATH%.app}" visible="false">
+                  <pkg-ref id="com.huawei.${APP_PATH%.app}"/>
+              </choice>
+              <pkg-ref id="com.huawei.${APP_PATH%.app}" version="1.0.0" onConclusion="none">component.pkg</pkg-ref>
+          </installer-gui-script>
+          EOF
         # 创建最终安装包
         productbuild \
           --distribution distribution.xml \
