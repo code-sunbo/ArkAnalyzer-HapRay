@@ -109,11 +109,12 @@ jobs:
         mkdir -p pkg_scripts
         
         # 查找并移动应用程序
-        APP_PATH=$(find dist -maxdepth 1 -type d -name "*.app" | head -n 1)
+        APP_PATH=$(find perf_testing/dist -maxdepth 1 -type d -name "*.app" | head -n 1)
         if [ -z "$APP_PATH" ]; then
           echo "Error: No .app bundle found in dist directory"
           exit 1
         fi
+        APP_NAME=$(basename "$APP_PATH" .app)
         
         # 复制应用到安装目录
         cp -R "$APP_PATH" pkg_root/Applications/
@@ -138,23 +139,23 @@ jobs:
         cat <<'EOF' > distribution.xml
           <?xml version="1.0" encoding="utf-8"?>
           <installer-gui-script minSpecVersion="2">
-              <title>Your Application Name</title>
-              <background file="background.png" alignment="bottomleft" scaling="none"/>
+              <title>ArkAnalyzer HapRay</title>
+              <background file="background.svg" alignment="bottomleft" scaling="none"/>
               <welcome file="welcome.html"/>
               <license file="license.rtf"/>
               <options customize="never" rootVolumeOnly="true"/>
               <domains enable_anywhere="false" enable_currentUserHome="false" enable_localSystem="true"/>
-              <pkg-ref id="com.huawei.${APP_PATH%.app}"/>
+              <pkg-ref id="com.huawei.${APP_NAME}"/>
               <choices-outline>
                   <line choice="default">
-                      <line choice="${APP_PATH%.app}"/>
+                      <line choice="${APP_NAME}"/>
                   </line>
               </choices-outline>
               <choice id="default"/>
-              <choice id="${APP_PATH%.app}" visible="false">
-                  <pkg-ref id="com.huawei.${APP_PATH%.app}"/>
+              <choice id="${APP_NAME}" visible="false">
+                  <pkg-ref id="com.huawei.${APP_NAME}"/>
               </choice>
-              <pkg-ref id="com.huawei.${APP_PATH%.app}" version="1.0.0" onConclusion="none">component.pkg</pkg-ref>
+              <pkg-ref id="com.huawei.${APP_NAME}" version="1.0.0" onConclusion="none">component.pkg</pkg-ref>
           </installer-gui-script>
           EOF
         # 创建最终安装包
