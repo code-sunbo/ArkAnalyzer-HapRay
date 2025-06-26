@@ -237,6 +237,12 @@ jobs:
           --resources . \
           --package-path . \
           "ArkAnalyzer-HapRay-${{ matrix.item.platform }}-${{ matrix.item.arch }}.pkg"
+        
+        echo "Generated package files:"
+        ls -l *.pkg
+        echo "Current directory: $(pwd)"
+        echo "Files in current directory:"
+        ls -l
       shell: bash
 
     - name: Upload artifact
