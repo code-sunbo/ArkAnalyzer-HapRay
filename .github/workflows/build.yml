@@ -135,7 +135,7 @@ jobs:
           "component.pkg"
         
         # 创建分发文件
-        cat > distribution.xml <<EOT
+        cat <<'EOF' > distribution.xml
 <?xml version="1.0" encoding="utf-8"?>
 <installer-gui-script minSpecVersion="2">
     <title>Your Application Name</title>
@@ -156,8 +156,7 @@ jobs:
     </choice>
     <pkg-ref id="com.huawei.${APP_PATH%.app}" version="1.0.0" onConclusion="none">component.pkg</pkg-ref>
 </installer-gui-script>
-EOT
-        
+EOF
         # 创建最终安装包
         productbuild \
           --distribution distribution.xml \
