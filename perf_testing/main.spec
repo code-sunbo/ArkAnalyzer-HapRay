@@ -57,3 +57,9 @@ exe = EXE(
     codesign_identity=None,
     entitlements_file=None,
 )
+
+app = BUNDLE(
+    name='ArkAnalyzer-HapRay.app',
+    icon='icon.icns',
+    bundle_identifier='com.huawei.ArkAnalyzer-HapRay'
+)
