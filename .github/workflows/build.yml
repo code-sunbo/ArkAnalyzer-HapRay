@@ -53,7 +53,7 @@ jobs:
             arch: x64
             platform: darwin
             cargo_target: x86_64-apple-darwin
-            dmg_arch: x86_64
+            dmg_arch: x64
             pyinstaller_arch: x86_64
             package_lock_path: .github/workflows/package-lock.json
             use_static_python: false

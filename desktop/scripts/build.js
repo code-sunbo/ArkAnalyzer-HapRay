@@ -58,9 +58,10 @@ function getMacBundleArtifacts() {
   const tauriConf = loadTauriConf();
   const productName = tauriConf.productName || DEFAULT_PRODUCT_NAME;
   const version = tauriConf.version;
-  const arch = process.arch === "arm64" ? "aarch64" : "x86_64";
+  /** Tauri 2 dmg 后缀：Apple Silicon 为 aarch64；Intel 为 x64（与 Rust 三元组 x86_64 不同） */
+  const dmgArchSuffix = process.arch === "arm64" ? "aarch64" : "x64";
   const appName = `${productName}.app`;
-  const dmgName = `${productName}_${version}_${arch}.dmg`;
+  const dmgName = `${productName}_${version}_${dmgArchSuffix}.dmg`;
   return {
     productName,
     appName,
