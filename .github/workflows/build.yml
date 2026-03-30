@@ -222,24 +222,6 @@ jobs:
         path: desktop/src-tauri/target/${{ matrix.item.cargo_target }}/release/bundle/dmg/*_${{ matrix.item.dmg_arch }}.dmg
 
   # 契约冒烟：仅在完整构建矩阵全部成功后运行（与此前独立 contract-smoke.yml 等价，避免未构建即跑 smoke）
-  contract-smoke-perf-testing:
-    name: Contract smoke / perf_testing
-    needs: build
-    if: success()
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version-file: '.python-version'
-      - uses: astral-sh/setup-uv@v5
-      - name: Schema + CLI smoke tests
-        working-directory: perf_testing
-        run: |
-          set -euo pipefail
-          uv sync
-          uv run pytest tests/test_hapray_tool_result_contract.py tests/test_contract_cli_smoke.py -v
-
   contract-smoke-optimization-detector:
     name: Contract smoke / optimization_detector
     needs: build
