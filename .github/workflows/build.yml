@@ -221,6 +221,113 @@ jobs:
         name: ArkAnalyzer-HapRay-${{ matrix.item.platform }}-${{ matrix.item.arch }}
         path: desktop/src-tauri/target/${{ matrix.item.cargo_target }}/release/bundle/dmg/*_${{ matrix.item.dmg_arch }}.dmg
 
+  # 推送到 main 时，将各矩阵构建产物汇总并上传到 GitHub Release；可选同步到 GitCode SMAT/ArkAnalyzer-HapRay
+  release:
+    name: Upload artifacts (GitHub & optional GitCode)
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: Create Release and upload assets (GitHub)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: main-${{ github.sha }}
+          name: main @ ${{ github.sha }}
+          target_commitish: ${{ github.sha }}
+          generate_release_notes: true
+          files: release-assets/**/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # 需先在仓库 Secrets 中配置 GITCODE_TOKEN（GitCode 个人访问令牌，具备该仓库 Release/写权限）
+      # API 文档：https://api.gitcode.com （v5）创建 Release、获取附件上传地址等
+      # 未配置 GITCODE_TOKEN 时本步骤跳过；GitCode 仓库需已包含与本次构建相同的 commit（例如与 GitHub 镜像同步）
+      - name: Create Release and upload assets (GitCode)
+        env:
+          GITCODE_TOKEN: ${{ secrets.GITCODE_TOKEN }}
+          GITCODE_API_BASE: https://api.gitcode.com
+          GITCODE_OWNER: SMAT
+          GITCODE_REPO: ArkAnalyzer-HapRay
+          SHA: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          if [ -z "${GITCODE_TOKEN:-}" ]; then
+            echo "::notice::未配置 GITCODE_TOKEN，已跳过 GitCode Release"
+            exit 0
+          fi
+
+          TAG="main-${SHA}"
+          API="${GITCODE_API_BASE}/api/v5/repos/${GITCODE_OWNER}/${GITCODE_REPO}"
+          AUTH=( -H "PRIVATE-TOKEN: ${GITCODE_TOKEN}" )
+
+          create_payload=$(jq -n \
+            --arg tag "$TAG" \
+            --arg name "main @ ${SHA}" \
+            --arg ref "${SHA}" \
+            --arg body "GitHub Actions run ${RUN_ID}" \
+            '{tag_name: $tag, name: $name, ref: $ref, body: $body}')
+
+          code=$(curl -sS -o /tmp/gitcode_release.json -w "%{http_code}" -X POST \
+            "${AUTH[@]}" -H "Content-Type: application/json" \
+            -d "$create_payload" \
+            "${API}/releases") || true
+          echo "GitCode POST /releases -> HTTP ${code}"
+          cat /tmp/gitcode_release.json 2>/dev/null || true
+          if [ "${code}" != "200" ] && [ "${code}" != "201" ]; then
+            if [ "${code}" = "400" ] || [ "${code}" = "409" ] || [ "${code}" = "422" ]; then
+              echo "::warning::GitCode 创建 Release 返回 ${code}（可能已存在），继续尝试附件上传"
+            else
+              echo "::error::GitCode 创建 Release 失败"
+              exit 1
+            fi
+          fi
+
+          TAG_ENC=$(TAG="$TAG" python3 -c "import os,urllib.parse; print(urllib.parse.quote(os.environ['TAG'], safe=''))")
+          up_json=$(curl -sS "${AUTH[@]}" "${API}/releases/${TAG_ENC}/upload_url")
+          echo "GitCode GET upload_url response:"
+          echo "${up_json}" | jq . 2>/dev/null || echo "${up_json}"
+
+          upload_base=$(echo "${up_json}" | jq -r '.upload_url // .url // empty')
+          if [ -z "${upload_base}" ] || [ "${upload_base}" = "null" ]; then
+            echo "::warning::响应中未找到 upload_url/url 字段；请对照 https://docs.gitcode.com 文档核对附件上传接口后调整 workflow"
+            exit 0
+          fi
+
+          n=0
+          while IFS= read -r -d '' f; do
+            bn=$(basename "$f")
+            target="${upload_base}"
+            if [[ "${upload_base}" == *'{?name,label}'* ]]; then
+              target="${upload_base//\{?name,label\}/}?name=${bn}"
+            elif [[ "${upload_base}" == *'{?name}'* ]]; then
+              target="${upload_base//\{?name\}/}?name=${bn}"
+            elif [[ "${upload_base}" == *'{name}'* ]]; then
+              target="${upload_base//\{name\}/${bn}}"
+            fi
+            echo "Uploading: ${bn}"
+            if ! curl -sS -f -X POST "${AUTH[@]}" -F "file=@${f}" "${target}"; then
+              bn_enc=$(TAG="$bn" python3 -c "import os,urllib.parse; print(urllib.parse.quote(os.environ['TAG'], safe=''))")
+              echo "::warning::${bn} 首次上传失败，重试: ${upload_base}?name=${bn_enc}"
+              curl -sS -f -X POST "${AUTH[@]}" -F "file=@${f}" "${upload_base}?name=${bn_enc}"
+            fi
+            n=$((n + 1))
+          done < <(find release-assets -type f ! -name '.*' -print0)
+
+          if [ "${n}" -eq 0 ]; then
+            echo "::warning::release-assets 下未发现文件"
+          else
+            echo "GitCode 已上传 ${n} 个文件"
+          fi
+
   # 契约冒烟：仅在完整构建矩阵全部成功后运行（与此前独立 contract-smoke.yml 等价，避免未构建即跑 smoke）
   contract-smoke-optimization-detector:
     name: Contract smoke / optimization_detector
