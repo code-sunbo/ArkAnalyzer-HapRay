@@ -324,33 +324,37 @@ jobs:
           fi
 
           TAG_ENC=$(TAG="$TAG" python3 -c "import os,urllib.parse; print(urllib.parse.quote(os.environ['TAG'], safe=''))")
-          up_json=$(curl -sS "${AUTH[@]}" "${API}/releases/${TAG_ENC}/upload_url")
-          echo "GitCode GET upload_url response:"
-          echo "${up_json}" | jq . 2>/dev/null || echo "${up_json}"
 
-          upload_base=$(echo "${up_json}" | jq -r '.upload_url // .url // empty')
-          if [ -z "${upload_base}" ] || [ "${upload_base}" = "null" ]; then
-            echo "::warning::响应中未找到 upload_url/url 字段；请对照 https://docs.gitcode.com 文档核对附件上传接口后调整 workflow"
-            exit 0
-          fi
-
+          # GET 上传地址必须带 query：file_name（见 GitCode GET .../releases/:tag/upload_url）
           n=0
           while IFS= read -r -d '' f; do
             bn=$(basename "$f")
+            bn_enc=$(FILE="$bn" python3 -c "import os,urllib.parse; print(urllib.parse.quote(os.environ['FILE'], safe=''))")
+            up_json=$(curl -sS "${AUTH[@]}" "${API}/releases/${TAG_ENC}/upload_url?file_name=${bn_enc}")
+            echo "GitCode GET upload_url for ${bn}:"
+            echo "${up_json}" | jq . 2>/dev/null || echo "${up_json}"
+
+            if echo "${up_json}" | jq -e '.error_code' >/dev/null 2>&1; then
+              echo "::error::获取上传地址失败: $(echo "${up_json}" | jq -r '.error_message // empty')"
+              exit 1
+            fi
+
+            upload_base=$(echo "${up_json}" | jq -r '.upload_url // .url // empty')
+            if [ -z "${upload_base}" ] || [ "${upload_base}" = "null" ]; then
+              echo "::error::响应中未找到 upload_url/url，请检查 GitCode 文档 GET /releases/:tag/upload_url"
+              exit 1
+            fi
+
             target="${upload_base}"
             if [[ "${upload_base}" == *'{?name,label}'* ]]; then
-              target="${upload_base//\{?name,label\}/}?name=${bn}"
+              target="${upload_base//\{?name,label\}/}?name=${bn_enc}"
             elif [[ "${upload_base}" == *'{?name}'* ]]; then
-              target="${upload_base//\{?name\}/}?name=${bn}"
+              target="${upload_base//\{?name\}/}?name=${bn_enc}"
             elif [[ "${upload_base}" == *'{name}'* ]]; then
               target="${upload_base//\{name\}/${bn}}"
             fi
             echo "Uploading: ${bn}"
-            if ! curl -sS -f -X POST "${AUTH[@]}" -F "file=@${f}" "${target}"; then
-              bn_enc=$(TAG="$bn" python3 -c "import os,urllib.parse; print(urllib.parse.quote(os.environ['TAG'], safe=''))")
-              echo "::warning::${bn} 首次上传失败，重试: ${upload_base}?name=${bn_enc}"
-              curl -sS -f -X POST "${AUTH[@]}" -F "file=@${f}" "${upload_base}?name=${bn_enc}"
-            fi
+            curl -sS -f -X POST "${AUTH[@]}" -F "file=@${f}" "${target}"
             n=$((n + 1))
           done < <(find release-assets -type f ! -name '.*' -print0)
 
