@@ -2,6 +2,12 @@ name: Build Executables
 
 on:
   workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "GitHub/GitCode 共用 tag 与 GitHub Release 标题（如 v1.5.2）；留空则使用根目录 package.json 的 vX.Y.Z。仅手动运行 main 时生效。"
+        required: false
+        default: ""
+        type: string
   push:
     branches: [ "main", "dev" ]
   pull_request:
@@ -221,27 +227,50 @@ jobs:
         name: ArkAnalyzer-HapRay-${{ matrix.item.platform }}-${{ matrix.item.arch }}
         path: desktop/src-tauri/target/${{ matrix.item.cargo_target }}/release/bundle/dmg/*_${{ matrix.item.dmg_arch }}.dmg
 
-  # 推送到 main 时，将各矩阵构建产物汇总并上传到 GitHub Release；可选同步到 GitCode SMAT/ArkAnalyzer-HapRay
+  # push→main：GitHub/GitCode 共用预发布 tag「vX.Y.Z-alpha.<短 sha>」；手动 main：workflow 输入 tag_name 或 vX.Y.Z；GitHub Release 标题与 tag 一致。可选同步 GitCode SMAT/ArkAnalyzer-HapRay
   release:
     name: Upload artifacts (GitHub & optional GitCode)
     needs: build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
+      - name: Checkout (read package.json for release tag)
+        uses: actions/checkout@v4
+
       - name: Download all build artifacts
         uses: actions/download-artifact@v4
         with:
           path: release-assets
           merge-multiple: true
 
+      - name: Compute release tag (GitHub & GitCode)
+        env:
+          TAG_NAME_INPUT: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name || '' }}
+        run: |
+          set -euo pipefail
+          VER=$(node -p "require('./package.json').version")
+          SHORT_SHA=$(echo "${GITHUB_SHA}" | cut -c1-7)
+          if [ "${GITHUB_EVENT_NAME}" = "push" ]; then
+            TAG="v${VER}-alpha.${SHORT_SHA}"
+          else
+            if [ -n "${TAG_NAME_INPUT:-}" ]; then
+              TAG="$(echo -n "${TAG_NAME_INPUT}" | tr -d '[:space:]')"
+            else
+              TAG="v${VER}"
+            fi
+          fi
+          echo "RELEASE_TAG=${TAG}" >> "${GITHUB_ENV}"
+          echo "RELEASE_TAG=${TAG}"
+
       - name: Create Release and upload assets (GitHub)
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: main-${{ github.sha }}
-          name: main @ ${{ github.sha }}
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: ${{ env.RELEASE_TAG }}
           target_commitish: ${{ github.sha }}
+          prerelease: ${{ github.event_name == 'push' }}
           generate_release_notes: true
           files: release-assets/**/*
         env:
@@ -265,15 +294,18 @@ jobs:
             exit 0
           fi
 
-          TAG="main-${SHA}"
+          TAG="${RELEASE_TAG}"
+          echo "GitCode tag_name=${TAG} (same as GitHub)"
+
           API="${GITCODE_API_BASE}/api/v5/repos/${GITCODE_OWNER}/${GITCODE_REPO}"
           AUTH=( -H "PRIVATE-TOKEN: ${GITCODE_TOKEN}" )
 
+          # GitCode POST /releases 不支持 prerelease；预发布/正式由 tag_name（vX.Y.Z-alpha.* vs vX.Y.Z）表达
           create_payload=$(jq -n \
             --arg tag "$TAG" \
-            --arg name "main @ ${SHA}" \
+            --arg name "$TAG" \
             --arg ref "${SHA}" \
-            --arg body "GitHub Actions run ${RUN_ID}" \
+            --arg body "GitHub Actions run ${RUN_ID}, commit ${SHA}" \
             '{tag_name: $tag, name: $name, ref: $ref, body: $body}')
 
           code=$(curl -sS -o /tmp/gitcode_release.json -w "%{http_code}" -X POST \
