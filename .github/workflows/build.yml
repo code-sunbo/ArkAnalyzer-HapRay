@@ -354,7 +354,19 @@ jobs:
               target="${upload_base//\{name\}/${bn}}"
             fi
             echo "Uploading: ${bn}"
-            curl -sS -f -X POST "${AUTH[@]}" -F "file=@${f}" "${target}"
+
+            # 预签名对象存储地址：按返回 headers 直接二进制上传，不携带 GitCode PRIVATE-TOKEN
+            mapfile -t upload_headers < <(echo "${up_json}" | jq -r '.headers // {} | to_entries[] | "\(.key): \(.value)"')
+            header_args=()
+            for h in "${upload_headers[@]}"; do
+              header_args+=( -H "$h" )
+            done
+
+            # 优先 PUT（OBS/S3 风格），失败时回退到 POST，兼容服务端实现差异
+            if ! curl -sS -f -X PUT "${header_args[@]}" --data-binary "@${f}" "${target}"; then
+              echo "::warning::PUT 上传失败，尝试 POST 二进制上传: ${bn}"
+              curl -sS -f -X POST "${header_args[@]}" --data-binary "@${f}" "${target}"
+            fi
             n=$((n + 1))
           done < <(find release-assets -type f ! -name '.*' -print0)
 
