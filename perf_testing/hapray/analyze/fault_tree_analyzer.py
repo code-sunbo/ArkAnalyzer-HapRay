@@ -110,28 +110,52 @@ class FaultTreeAnalyzer(BaseAnalyzer):
         return result
 
     def _collect_app_invoke_times(self, cursor, name_match: str, app_pids: list) -> int:
-        return self._collect_invoke_times(cursor, name_match, f'pid in ({",".join(map(str, app_pids))})')
-
-    def _collect_rs_invoke_times(self, cursor, name_match: str) -> int:
-        return self._collect_invoke_times(cursor, name_match, "name = 'render_service'")
-
-    def _collect_invoke_times(self, cursor, name_match: str, process_match: str) -> int:
         try:
-            cursor.execute(f"""
+            # Validate that app_pids are integers to prevent injection
+            safe_pids = [int(pid) for pid in app_pids]
+            placeholders = ','.join('?' * len(safe_pids))
+            cursor.execute(
+                f"""
                 SELECT count(*) FROM callstack
                 WHERE
-                name LIKE '{name_match}'
+                name LIKE ?
                 and callid in (
                     SELECT id FROM thread
                     where
                         ipid in (
                             SELECT ipid
                             FROM process
-                            where {process_match}
+                            where pid in ({placeholders})
                         )
                     )
-            """)
+                """,
+                [name_match] + safe_pids,
+            )
+            rows = cursor.fetchall()
+            return rows[0][0]
+        except sqlite3.Error as e:
+            self.logger.error('FaultTreeAnalyzer invoke Database error: %s', str(e))
+        return 0
 
+    def _collect_rs_invoke_times(self, cursor, name_match: str) -> int:
+        try:
+            cursor.execute(
+                """
+                SELECT count(*) FROM callstack
+                WHERE
+                name LIKE ?
+                and callid in (
+                    SELECT id FROM thread
+                    where
+                        ipid in (
+                            SELECT ipid
+                            FROM process
+                            where name = 'render_service'
+                        )
+                    )
+                """,
+                [name_match],
+            )
             rows = cursor.fetchall()
             return rows[0][0]
         except sqlite3.Error as e:

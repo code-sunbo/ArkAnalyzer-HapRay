@@ -845,9 +845,15 @@ async function runE2ETests() {
 
     // 配置 LLM 环境变量用于符号恢复模块测试
     console.log('🤖 配置 LLM 环境变量...');
-    process.env.LLM_API_KEY = 'sk-14ccee5142d04e7fbbcda3418b715390';
-    process.env.LLM_BASE_URL = 'https://api.deepseek.com/v1';
-    process.env.LLM_MODEL = 'deepseek-chat';
+    if (!process.env.LLM_API_KEY) {
+        console.warn('⚠ LLM_API_KEY 未设置，请通过环境变量提供（例如: export LLM_API_KEY=your-key）');
+    }
+    if (!process.env.LLM_BASE_URL) {
+        process.env.LLM_BASE_URL = 'https://api.deepseek.com/v1';
+    }
+    if (!process.env.LLM_MODEL) {
+        process.env.LLM_MODEL = 'deepseek-chat';
+    }
 
     console.log('✓ LLM 环境变量配置完成：');
     console.log(`  - 模型名称: ${process.env.LLM_MODEL}`);

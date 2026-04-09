@@ -16,6 +16,7 @@ limitations under the License.
 import json
 import os
 import re
+import subprocess
 import time
 from abc import ABC, abstractmethod
 
@@ -217,14 +218,14 @@ class PerfTestCase(TestCase, UIEventWrapper, ABC):
     def set_device_redundant_mode(self):
         # 设置hdc参数
         Log.info('设置hdc参数: persist.ark.properties 0x200105c')
-        os.system('hdc shell param set persist.ark.properties 0x200105c')
+        subprocess.run(['hdc', 'shell', 'param', 'set', 'persist.ark.properties', '0x200105c'], check=False)
         self._redundant_mode_status = True
 
     def reboot_device(self):
         regex = re.compile(r'\d+')
         # 重启手机
         Log.info('重启手机')
-        os.system('hdc shell reboot')
+        subprocess.run(['hdc', 'shell', 'reboot'], check=False)
 
         # 检测手机是否重启成功
         Log.info('检测手机重启状态')

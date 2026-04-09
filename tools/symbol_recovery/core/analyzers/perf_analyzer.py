@@ -5,6 +5,7 @@
 """
 
 import platform
+import re
 import shutil
 import sqlite3
 import subprocess
@@ -203,7 +204,11 @@ class PerfDataToSqliteConverter:
             logger.info(f'数据库包含 {len(tables)} 个表:')
             for table in tables:
                 table_name = table[0]
-                cursor.execute(f'SELECT COUNT(*) FROM {table_name};')
+                # Validate table name to prevent SQL injection (allow only alphanumeric and underscores)
+                if not re.match(r'^[A-Za-z_][A-Za-z0-9_]*$', table_name):
+                    logger.warning(f'  - {table_name}: 跳过（表名包含非法字符）')
+                    continue
+                cursor.execute(f'SELECT COUNT(*) FROM [{table_name}];')
                 count = cursor.fetchone()[0]
                 logger.info(f'  - {table_name}: {count} 行')
 
