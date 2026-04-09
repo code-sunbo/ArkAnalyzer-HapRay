@@ -17,6 +17,7 @@ import json
 import logging
 import os
 import platform
+import shlex
 import shutil
 import sqlite3
 import subprocess
@@ -354,7 +355,10 @@ class ExeUtils:
     def execute_command_check_output(cmd, timeout=120000):
         ret = 'error'
         try:
-            ret = subprocess.check_output(cmd, timeout=timeout, stderr=subprocess.STDOUT, shell=True)
+            # Use shell=False with a command list for safety; split string commands with shlex
+            if isinstance(cmd, str):
+                cmd = shlex.split(cmd)
+            ret = subprocess.check_output(cmd, timeout=timeout, stderr=subprocess.STDOUT)
             return ret.decode('gbk', 'ignore').encode('utf-8')
         except subprocess.CalledProcessError as e:
             logger.error('cmd->%s excute error output=%s', cmd, e.output)

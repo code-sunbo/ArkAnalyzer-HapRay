@@ -19,6 +19,7 @@ import os
 import queue
 import re
 import shutil
+import subprocess
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -347,13 +348,13 @@ class PerfAction:
         so_dir = Config.get('so_dir', None)
         if so_dir is not None:
             # hiperf report will use so_dir path to find symbols.
-            os.system(f'hdc file send {so_dir} /data/local/tmp/so_dir')
+            subprocess.run(['hdc', 'file', 'send', so_dir, '/data/local/tmp/so_dir'], check=False)
 
         action = PerfAction(reports_path, parsed_args.round, devices=parsed_args.devices)
         action.run()
 
         if so_dir is not None:
-            os.system('hdc shell rm -rf /data/local/tmp/so_dir')
+            subprocess.run(['hdc', 'shell', 'rm', '-rf', '/data/local/tmp/so_dir'], check=False)
 
         if parsed_args.hapflow:
             try:

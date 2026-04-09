@@ -15,6 +15,7 @@ limitations under the License.
 
 import os
 import re
+import subprocess
 import zipfile
 
 from hypium import UiDriver
@@ -134,9 +135,9 @@ class CaptureUI:
                         self.driver.pull_file(remote_screenshot_path, local_screenshot_path)
                     else:
                         # 使用hdc命令直接传输
-                        recv_cmd = f'hdc file recv {remote_screenshot_path} {local_screenshot_path}'
-                        Log.info(f'执行文件传输命令: {recv_cmd}')
-                        os.system(recv_cmd)
+                        recv_cmd = ['hdc', 'file', 'recv', remote_screenshot_path, local_screenshot_path]
+                        Log.info(f'执行文件传输命令: {" ".join(recv_cmd)}')
+                        subprocess.run(recv_cmd, check=False)
 
                     # 验证文件是否成功保存
                     if os.path.exists(local_screenshot_path):

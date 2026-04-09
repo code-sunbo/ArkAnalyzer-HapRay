@@ -225,14 +225,15 @@ export class ElfAnalyzer {
         let SQL = await initSqlJs();
         for (const dbFile of perfFiles) {
             const db = new SQL.Database(fs.readFileSync(dbFile));
-            const results = db.exec(`SELECT symbol FROM perf_files where path like '%${path.basename(filePath)}%'`);
-            if (results.length === 0) {
-                continue;
+            const stmt = db.prepare('SELECT symbol FROM perf_files WHERE path LIKE ?');
+            stmt.bind([`%${path.basename(filePath)}%`]);
+            while (stmt.step()) {
+                const row = stmt.get();
+                if (row[0]) {
+                    invokeSymbols.add(row[0] as string);
+                }
             }
-
-            results[0].values.map((row) => {
-                invokeSymbols.add(row[0] as string);
-            });
+            stmt.free();
         }
 
         logger.info(`${filePath} parse symbols from perf ${Array.from(invokeSymbols.values()).join('\n')}`);
